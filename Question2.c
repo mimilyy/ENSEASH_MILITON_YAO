@@ -56,7 +56,7 @@ void execute(char *message){
         //message is the actual command to be executed by the shell
         execl("/bin/sh","sh","-c",message,(char *)NULL);
 
-        //Error message if not executted
+        //Error message if not executed
         writeMessage("Execution error");
         exit(EXIT_FAILURE);
     }
