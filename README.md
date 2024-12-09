@@ -94,3 +94,16 @@ The result is displayed by incorporating an "executionTime" parameter into the r
 ***Terminal output***
 
 ![q5](https://github.com/user-attachments/assets/a8b1ad59-0944-4b1d-b904-55135c502bce)
+
+### Question 6
+
+Executing a complex command with arguments requires separating the command from its associated arguments. This is achieved by tokenizing the input string, splitting it based on spaces (" "), and storing the resulting tokens in a list.
+
+The execvp() function is then used to execute the command, with all arguments stored sequentially in a (char *) array. The final element of the array is set to (char *)NULL to indicate the end of the argument list.
+
+***Terminal output***
+
+![q62](https://github.com/user-attachments/assets/d693bda0-830b-4027-8ac6-56f949e72d69)
+
+
+![q61](https://github.com/user-attachments/assets/dd4cc9dd-c374-4dfe-b5e9-9cf1e2ac7995)
