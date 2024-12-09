@@ -127,3 +127,12 @@ The > symbol is replaced with NULL to remove it from the argument list.
 The file is opened in write mode (O_WRONLY), created if it does not exist (O_CREAT), or truncated (O_TRUNC) if it already exists.
 The standard output (STDOUT_FILENO) is redirected to the file using dup2.
 The file descriptor is closed using close(fd) after redirection.
+
+***Terminal output***
+
+![q71b](https://github.com/user-attachments/assets/32f855cf-10bd-4e2d-b956-23d68a28ea4d)
+
+![q72](https://github.com/user-attachments/assets/e99fae5f-83c5-48ad-a0fb-757eb0991564)
+
+
+
