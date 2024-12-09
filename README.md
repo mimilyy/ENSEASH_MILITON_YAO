@@ -110,18 +110,18 @@ The execvp() function is then used to execute the command, with all arguments st
 
 ### Question 7
 
-**Management of Redirections for stdin and stdout Using < and >**
+**Management of redirections for stdin and stdout using < and >**
 
 Redirection of stdin and stdout is handled through a redirection function, which processes the < and > symbols and removes them from the argument list, ensuring compatibility with the functionality described in question 6. File handling is performed using the open() function.
 
-**Input Redirection (<):**
+**Input redirection (<):**
 
 The < symbol is replaced with NULL to remove it from the argument list.
 The file specified is opened in read-only mode using O_RDONLY.
 The standard input (STDIN_FILENO) is redirected to the file using dup2.
 The file descriptor is closed using close(fd) after redirection.
 
-**Output Redirection (>):**
+**Output redirection (>):**
 
 The > symbol is replaced with NULL to remove it from the argument list.
 The file is opened in write mode (O_WRONLY), created if it does not exist (O_CREAT), or truncated (O_TRUNC) if it already exists.
