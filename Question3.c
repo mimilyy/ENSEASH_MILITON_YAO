@@ -62,15 +62,22 @@ void execute(char *message){
     }
 }
 
+//question 3
+void exitFunction(char *message, ssize_t readBytes){
+    if (strncmp(message, "exit",4)==0 || readBytes ==0)
+    {//'exit' or <ctrl>+d
+    writeMessage("Bye bye... \n");
+    exit(EXIT_SUCCESS);
+    }
+}
+
 int main(){
     //Set the buffer size for the input command (can be changed)
     const size_t bufferSize = SIZE;
     char message [bufferSize]; 
-    char *exit_message = "Bye bye...\n";
 
     //Display a welcome message (question 1)
     writeMessage("Welcome to ENSEA Tiny Shell.\nType 'exit' to quit.\n");
-    writeMessage("enseash \n");
 
     //main loop
     while(1){
@@ -80,13 +87,8 @@ int main(){
         //Read the input message
         ssize_t readBytes = readCommand(message,bufferSize);
 
-        //Exit function
-        if (strncmp(message,"exit",4)==0){
-            writeMessage(exit_message);
-            break;
-        }
-
-        //Execute the input message
+        //Execute the input message and manage the exit
+        exitFunction(message, readBytes);
         execute(message);
     }
     return EXIT_SUCCESS;
