@@ -6,205 +6,153 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <fcntl.h>
-#include <sys/stat.h>
+#include <sys/wait.h>
 
 #define SIZE 128
 
-
-// Function to display a message
-void writeMessage(const char *message) {
-    // Write the message to the standard output
-    write(STDOUT_FILENO, message, strlen(message));
+/// Function to display a welcome message (question 1)
+void writeMessage(const char* welcomeMessage) {
+    write(STDOUT_FILENO, welcomeMessage, strlen(welcomeMessage));
 }
 
-// Function to display status
-void convertMessage(const char *output, int val, float executionTime) {
-    // Write the message to the standard output
-    char message[SIZE]; 
-    snprintf(message, sizeof(message), "enseash [%s:%d|%fms] %% \n", output, val, executionTime);
-    writeMessage(message);
-}
-
-void displayPreviousCommand(float executionTime){
-    int status;
-
-    wait(&status);
-
-    if (WIFEXITED(status)){
-        convertMessage("exit", WEXITSTATUS(status), executionTime);
-    }
-
-    else if (WIFSIGNALED(status)){
-        convertMessage("sign", WTERMSIG(status), executionTime);
-    }
-
-    writeMessage("enseash");
-}
-
-
-// Function to read user input
+// Function to read the command entered by user (question 2)
 ssize_t readCommand(char *message, size_t size) {
-    ssize_t readBytes = read(STDIN_FILENO, message, size - 1); // Read user input
-
-    // Check if there's an input issue
+    ssize_t readBytes = read(STDERR_FILENO, message, size - 1);
     if (readBytes < 0) {
-        writeMessage("Error: read\n");
+        writeMessage("Read error occurred\n");
         exit(EXIT_FAILURE);
     }
-
-    // Null-terminate the string to avoid errors
-    message[strcspn(message, "\n")] = '\0';
-
-    // Return the number of bytes read
+    message[readBytes] = '\0';
     return readBytes;
 }
 
-//question 6 
-void tokenize(char *message, char *args[], size_t *argc) {
-    // break down into tokens 
-    char *token = strtok(message, " ");
+// Function to parse the command and arguments for execvp
+void parseCommand(char *message, char **argv) {
+    char *token = strtok(message, " \n");
+    int i = 0;
     while (token != NULL) {
-        args[(*argc)++] = token;
-        token = strtok(NULL, " ");
+        argv[i++] = token;
+        token = strtok(NULL, " \n");
     }
-    args[*argc] = NULL;
+    argv[i] = NULL;
 }
 
-// Function to manage redirections
-void redirection(char *args[], int argc){
-
-    char *input = NULL;
-    char *output = NULL;
-
-    // Check for input and output redirection
-    for (size_t i = 0; i < argc; i++) {
-        
-        // Input redirection
-        if (strcmp(args[i], "<") == 0) {
-            input = args[i + 1];
-            args[i] = NULL; 
-
-            // Open the input file for reading
-            int fd = open(input, O_RDONLY);
-            if (fd == -1) {
-                perror("Error: handleRedirection (Input)\nopen");
+// Function to check for redirections and manage file descriptors
+void handleRedirections(char **argv) {
+    int i = 0;
+    while (argv[i] != NULL) {
+        if (strcmp(argv[i], ">") == 0) {
+            // Output redirection
+            int fd = open(argv[i + 1], O_CREAT | O_WRONLY | O_TRUNC, 0644);
+            if (fd < 0) {
+                perror("open");
                 exit(EXIT_FAILURE);
             }
-
-            // Redirect standard input to the file
-            if (dup2(fd, STDIN_FILENO) == -1) {
-                perror("Error: handleRedirection (Input)\ndup2");
-                close(fd);
-                exit(EXIT_FAILURE);
-            }
-            
+            dup2(fd, STDOUT_FILENO);
             close(fd);
-        }
-        
-        // Output redirection
-        else if (strcmp(args[i], ">") == 0) {
-            output = args[i + 1];
-            args[i] = NULL; 
-
-            // Open the output file for writing
-            int fd = open(output, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-            if (fd == -1) {
-                perror("Error: handleRedirection (Output)\nopen");
+            argv[i] = NULL; // Remove the redirection operator and file from arguments
+        } else if (strcmp(argv[i], "<") == 0) {
+            // Input redirection
+            int fd = open(argv[i + 1], O_RDONLY);
+            if (fd < 0) {
+                perror("open");
                 exit(EXIT_FAILURE);
             }
-
-            // Redirect standard output to the file
-            if (dup2(fd, STDOUT_FILENO) == -1) {
-                perror("Error: handleRedirection (Output)\ndup2");
-                close(fd);
-                exit(EXIT_FAILURE);
-            }
+            dup2(fd, STDIN_FILENO);
             close(fd);
+            argv[i] = NULL; // Remove the redirection operator and file from arguments
         }
+        i++;
     }
 }
 
-double execute(char *message){
+double execute(char *message) {
     struct timespec startTime, endTime;
     float executionTime = 0;
-    
-    //Start time 
+
     if (clock_gettime(CLOCK_REALTIME, &startTime) == -1) {
         perror("clock_gettime");
         exit(EXIT_FAILURE);
     }
 
-    //Child process
     pid_t pid = fork();
 
-    //Check for possible error
     if (pid == -1) {
         perror("fork");
         exit(EXIT_FAILURE);
     }
 
-    //Parent process
     else if (pid != 0) {
         int status;
         wait(&status);
     }
 
     else {
-        char *args[SIZE];
-        size_t argc = 0;
+        char *argv[SIZE];
+        parseCommand(message, argv);
+        handleRedirections(argv); // Handle redirections before executing
 
-        tokenize(message, args, &argc);
-        redirection(args, argc);
-        execvp(args[0], args);
+        execvp(argv[0], argv);
 
-        //Error message if not executed
-        writeMessage("Error: execute\n"); 
-        exit(EXIT_FAILURE);     
+        perror("Execution error");
+        exit(EXIT_FAILURE);
     }
 
-    //End time
     if (clock_gettime(CLOCK_REALTIME, &endTime) == -1) {
         perror("clock_gettime");
         exit(EXIT_FAILURE);
     }
 
-    // Calculate the execution time
-    executionTime = ((endTime.tv_sec - startTime.tv_sec)*1000) + (endTime.tv_nsec - startTime.tv_nsec) / 1e6;
-
+    executionTime = ((endTime.tv_sec - startTime.tv_sec) * 1000) + (endTime.tv_nsec - startTime.tv_nsec) / 1e6;
     return executionTime;
 }
 
-//question 3
-void exitFunction(char *message, ssize_t readBytes){
-    if(strncmp(message,"exit",4)==0 || readBytes == 0)
-    { // 'exit' or <ctrl>+d
+// Function to display status
+void convertMessage(const char *output, int val, float executionTime) {
+    char message[SIZE];
+    snprintf(message, sizeof(message), "enseash [%s:%d|%fms] %% \n", output, val, executionTime);
+    writeMessage(message);
+}
+
+void displayPreviousCommand(float executionTime) {
+    int status;
+    wait(&status);
+
+    if (WIFEXITED(status)) {
+        convertMessage("exit", WEXITSTATUS(status), executionTime);
+    } else if (WIFSIGNALED(status)) {
+        convertMessage("sign", WTERMSIG(status), executionTime);
+    }
+
+    writeMessage("enseash");
+}
+
+// Question 3
+void exitFunction(char *message, ssize_t readBytes) {
+    if (strncmp(message, "exit", 4) == 0 || readBytes == 0) {
         writeMessage("Bye bye...\n");
         exit(EXIT_SUCCESS);
-    } 
+    }
 }
 
 int main() {
-    //Set the buffer size for the input command (can be changed)
-    const size_t bufferSize = SIZE;  
+    const size_t bufferSize = SIZE;
     char message[bufferSize];
     float executionTime = 0;
-    
-    //Display a welcome message (question 1)
+
     writeMessage("Welcome to ENSEA Tiny Shell.\nType 'exit' to quit.\n");
 
-    // Main loop
     while (1) {
-
-        //Display the return code/signal of the previous command 
         displayPreviousCommand(executionTime);
 
-        //Read the input message
         ssize_t readBytes = readCommand(message, bufferSize);
 
-        //Execute the input message and manage the exit
         exitFunction(message, readBytes);
+        executionTime = execute(message);
+    }
+    return EXIT_SUCCESS;
+}
         executionTime = execute(message);
     }
     return EXIT_SUCCESS;
