@@ -82,3 +82,15 @@ Instead of using printf, which can interfere with read()/write() operations, snp
 ***Terminal output***
 
 ![q4](https://github.com/user-attachments/assets/af31a99d-551c-4454-a44f-4be622cc341e)
+
+### Question 5
+
+The execution time of a command is measured using the clock_gettime function from the time.h library. The reference clock utilized is CLOCK_REALTIME, provided by the Linux kernel.
+
+Calling clock_gettime(CLOCK_REALTIME, &startTime) initializes the timer, and clock_gettime(CLOCK_REALTIME, &endTime) stops the timer. The execution time is then calculated in milliseconds, reflecting the typical duration of command execution.
+
+The result is displayed by incorporating an "executionTime" parameter into the relevant functions.
+
+***Terminal output***
+
+![q5](https://github.com/user-attachments/assets/a8b1ad59-0944-4b1d-b904-55135c502bce)
