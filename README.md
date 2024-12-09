@@ -66,3 +66,19 @@ It compares the first and second string argument with the exact same "length" an
 ***Terminal output***
 
 ![q3](https://github.com/user-attachments/assets/a5855f33-d3e5-4ed4-89d2-692b6f21385b)
+
+### Question 4
+
+The prompt includes the return code or signal of the previously executed program.
+
+To determine whether the program terminated due to a signal, conditional checks are used:
+- WIFEXITED(status) evaluates to true if the child process terminated normally.
+- WIFSIGNALED(status) evaluates to true if the child process was terminated by a signal.
+- WTERMSIG(status) provides the number of the signal that caused the process to terminate.  
+
+Displaying the message:
+Instead of using printf, which can interfere with read()/write() operations, snprintf is used to store the message in a C string. This string is then output using a custom writeMessage function.
+
+***Terminal output***
+
+![q4](https://github.com/user-attachments/assets/af31a99d-551c-4454-a44f-4be622cc341e)
